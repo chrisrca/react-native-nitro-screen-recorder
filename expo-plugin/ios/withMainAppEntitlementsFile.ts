@@ -30,7 +30,7 @@ export const withMainAppEntitlementsFile: ConfigPlugin<ConfigProps> = (
 
     // Find the main app group (try multiple approaches)
     const groups = xcodeProject.hash.project.objects.PBXGroup;
-    let mainAppGroupKey: string | null = null;
+    let mainAppGroupKey: string | null | undefined;
 
     // Debug: log all group names to understand the structure
     ScreenRecorderLog.log('Available groups:');
@@ -63,33 +63,21 @@ export const withMainAppEntitlementsFile: ConfigPlugin<ConfigProps> = (
       if (mainAppGroupKey) break;
     }
 
-    // If still not found, try to find the group that contains AppDelegate or main source files
+    // If still not found, use a simple fallback instead of the crash-prone children search
     if (!mainAppGroupKey) {
       ScreenRecorderLog.log(
         'Trying to find main app group by looking for AppDelegate...'
       );
-      for (const key in groups) {
-        const group = groups[key];
-        if (group && group.children) {
-          // Check if this group contains typical main app files
-          const hasMainAppFiles = group.children.some((childKey: string) => {
-            const file = files[childKey];
-            return (
-              file &&
-              (file.path?.includes('AppDelegate') ||
-                file.path?.includes('Info.plist') ||
-                file.name?.includes('AppDelegate'))
-            );
-          });
 
-          if (hasMainAppFiles) {
-            mainAppGroupKey = key;
-            ScreenRecorderLog.log(
-              `Found main app group by AppDelegate: ${group.name || 'unnamed'}`
-            );
-            break;
-          }
-        }
+      const groupKeys = Object.keys(groups);
+      if (groupKeys.length > 0) {
+        mainAppGroupKey = groupKeys[0]!;
+        const fallbackGroup = groups[mainAppGroupKey];
+        ScreenRecorderLog.log(
+          `Fallback to first group: name="${fallbackGroup?.name || 'unnamed'}", key=${mainAppGroupKey}`
+        );
+      } else {
+        ScreenRecorderLog.log('No groups found. Skipping entitlements addition.');
       }
     }
 
