@@ -57,7 +57,7 @@ export interface NitroScreenRecorder
     cameraDevice: CameraDevice,
     onRecordingFinished: (file: ScreenRecordingFile) => void
     // onRecordingError: (error: RecordingError) => void
-  ): void;
+  ): Promise<void>;
   stopInAppRecording(): Promise<ScreenRecordingFile | undefined>;
   cancelInAppRecording(): Promise<void>;
 

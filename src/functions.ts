@@ -136,22 +136,20 @@ export async function startInAppRecording(
   }
   // Handle camera options based on enableCamera flag
   if (input.options.enableCamera) {
-    return NitroScreenRecorderHybridObject.startInAppRecording(
+    await NitroScreenRecorderHybridObject.startInAppRecording(
       input.options.enableMic,
       input.options.enableCamera,
       input.options.cameraPreviewStyle ?? {},
       input.options.cameraDevice,
       input.onRecordingFinished
-      // input.onRecordingError
     );
   } else {
-    return NitroScreenRecorderHybridObject.startInAppRecording(
+    await NitroScreenRecorderHybridObject.startInAppRecording(
       input.options.enableMic,
       input.options.enableCamera,
       {},
       'front',
       input.onRecordingFinished
-      // input.onRecordingError
     );
   }
 }

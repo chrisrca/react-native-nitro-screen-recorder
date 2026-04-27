@@ -243,7 +243,7 @@ class NitroScreenRecorder: HybridNitroScreenRecorderSpec {
     cameraPreviewStyle: RecorderCameraStyle,
     cameraDevice: CameraDevice,
     onRecordingFinished: @escaping RecordingFinishedCallback
-  ) throws {
+  ) throws -> Promise<Void> {
     safelyClearInAppRecordingFiles()
 
     guard recorder.isAvailable else {
@@ -254,8 +254,10 @@ class NitroScreenRecorder: HybridNitroScreenRecorderSpec {
     }
 
     if recorder.isRecording {
-      print("Recorder is already recording.")
-      return
+      throw RecorderError.error(
+        name: "ALREADY_RECORDING",
+        message: "A recording session is already in progress"
+      )
     }
 
     if enableCamera {
@@ -286,18 +288,27 @@ class NitroScreenRecorder: HybridNitroScreenRecorderSpec {
       recorder.cameraPosition = device
     }
     inAppRecordingActive = true
-    recorder.startRecording { [weak self] error in
-      guard let self = self else { return }
-      if let error = error {
-        print("❌ Error starting in-app recording:", error.localizedDescription)
-        inAppRecordingActive = false
-        return
-      }
-      print("✅ In-app recording started (mic:\(enableMic) camera:\(enableCamera))")
 
-      if enableCamera {
-        DispatchQueue.main.async {
-          self.setupAndDisplayCamera(style: cameraPreviewStyle)
+    return Promise.async {
+      try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
+        self.recorder.startRecording { [weak self] error in
+          guard let self = self else {
+            continuation.resume(throwing: RecorderError.error(name: "DEALLOCATED", message: "Recorder was deallocated"))
+            return
+          }
+          if let error = error {
+            print("❌ Error starting in-app recording:", error.localizedDescription)
+            self.inAppRecordingActive = false
+            continuation.resume(throwing: error)
+            return
+          }
+          print("✅ In-app recording started (mic:\(enableMic) camera:\(enableCamera))")
+          if enableCamera {
+            DispatchQueue.main.async {
+              self.setupAndDisplayCamera(style: cameraPreviewStyle)
+            }
+          }
+          continuation.resume(returning: ())
         }
       }
     }
