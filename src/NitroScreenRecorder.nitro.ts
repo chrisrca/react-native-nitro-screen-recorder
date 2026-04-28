@@ -20,8 +20,10 @@ import type {
  *
  */
 
-export interface NitroScreenRecorder
-  extends HybridObject<{ ios: 'swift'; android: 'kotlin' }> {
+export interface NitroScreenRecorder extends HybridObject<{
+  ios: 'swift';
+  android: 'kotlin';
+}> {
   // ============================================================================
   // PERMISSIONS
   // ============================================================================
@@ -55,9 +57,10 @@ export interface NitroScreenRecorder
     enableCamera: boolean,
     cameraPreviewStyle: RecorderCameraStyle,
     cameraDevice: CameraDevice,
-    onRecordingFinished: (file: ScreenRecordingFile) => void
-    // onRecordingError: (error: RecordingError) => void
-  ): Promise<void>;
+    onRecordingFinished: (file: ScreenRecordingFile) => void,
+    onRecordingStarted: () => void,
+    onRecordingError: (error: RecordingError) => void
+  ): void;
   stopInAppRecording(): Promise<ScreenRecordingFile | undefined>;
   cancelInAppRecording(): Promise<void>;
 

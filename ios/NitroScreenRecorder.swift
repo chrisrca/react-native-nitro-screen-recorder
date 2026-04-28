@@ -242,8 +242,10 @@ class NitroScreenRecorder: HybridNitroScreenRecorderSpec {
     enableCamera: Bool,
     cameraPreviewStyle: RecorderCameraStyle,
     cameraDevice: CameraDevice,
-    onRecordingFinished: @escaping RecordingFinishedCallback
-  ) throws -> Promise<Void> {
+    onRecordingFinished: @escaping RecordingFinishedCallback,
+    onRecordingStarted: @escaping () -> Void,
+    onRecordingError: @escaping (RecordingError) -> Void
+  ) throws {
     safelyClearInAppRecordingFiles()
 
     guard recorder.isAvailable else {
@@ -254,10 +256,11 @@ class NitroScreenRecorder: HybridNitroScreenRecorderSpec {
     }
 
     if recorder.isRecording {
-      throw RecorderError.error(
+      onRecordingError(RecordingError(
         name: "ALREADY_RECORDING",
         message: "A recording session is already in progress"
-      )
+      ))
+      return
     }
 
     if enableCamera {
@@ -288,27 +291,22 @@ class NitroScreenRecorder: HybridNitroScreenRecorderSpec {
       recorder.cameraPosition = device
     }
     inAppRecordingActive = true
-
-    return Promise.async {
-      try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
-        self.recorder.startRecording { [weak self] error in
-          guard let self = self else {
-            continuation.resume(throwing: RecorderError.error(name: "DEALLOCATED", message: "Recorder was deallocated"))
-            return
-          }
-          if let error = error {
-            print("❌ Error starting in-app recording:", error.localizedDescription)
-            self.inAppRecordingActive = false
-            continuation.resume(throwing: error)
-            return
-          }
-          print("✅ In-app recording started (mic:\(enableMic) camera:\(enableCamera))")
-          if enableCamera {
-            DispatchQueue.main.async {
-              self.setupAndDisplayCamera(style: cameraPreviewStyle)
-            }
-          }
-          continuation.resume(returning: ())
+    recorder.startRecording { [weak self] error in
+      guard let self = self else { return }
+      if let error = error {
+        print("❌ Error starting in-app recording:", error.localizedDescription)
+        self.inAppRecordingActive = false
+        onRecordingError(RecordingError(
+          name: "START_FAILED",
+          message: error.localizedDescription
+        ))
+        return
+      }
+      print("✅ In-app recording started (mic:\(enableMic) camera:\(enableCamera))")
+      onRecordingStarted()
+      if enableCamera {
+        DispatchQueue.main.async {
+          self.setupAndDisplayCamera(style: cameraPreviewStyle)
         }
       }
     }

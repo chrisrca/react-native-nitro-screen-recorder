@@ -135,23 +135,24 @@ export async function startInAppRecording(
     throw new Error('Camera permission not granted.');
   }
   // Handle camera options based on enableCamera flag
-  if (input.options.enableCamera) {
-    await NitroScreenRecorderHybridObject.startInAppRecording(
+  const cameraPreviewStyle = input.options.enableCamera
+    ? (input.options.cameraPreviewStyle ?? {})
+    : {};
+  const cameraDevice = input.options.enableCamera
+    ? input.options.cameraDevice
+    : 'front';
+
+  return new Promise((resolve, reject) => {
+    NitroScreenRecorderHybridObject.startInAppRecording(
       input.options.enableMic,
       input.options.enableCamera,
-      input.options.cameraPreviewStyle ?? {},
-      input.options.cameraDevice,
-      input.onRecordingFinished
+      cameraPreviewStyle,
+      cameraDevice,
+      input.onRecordingFinished,
+      () => resolve(),
+      (error) => reject(new Error(error.message))
     );
-  } else {
-    await NitroScreenRecorderHybridObject.startInAppRecording(
-      input.options.enableMic,
-      input.options.enableCamera,
-      {},
-      'front',
-      input.onRecordingFinished
-    );
-  }
+  });
 }
 
 /**
