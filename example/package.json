@@ -10,6 +10,7 @@
     "build:ios": "react-native build-ios --mode Debug"
   },
   "dependencies": {
+    "@chrisrca/react-native-nitro-screen-recorder": "*",
     "expo": "55.0.0-preview.10",
     "expo-dev-client": "~55.0.5",
     "expo-status-bar": "~55.0.2",
@@ -17,8 +18,7 @@
     "expo-video-metadata": "^1.5.0",
     "react": "19.2.0",
     "react-native": "0.83.1",
-    "react-native-nitro-modules": "^0.33.8",
-    "react-native-nitro-screen-recorder": "*"
+    "react-native-nitro-modules": "^0.33.8"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
