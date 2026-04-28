@@ -303,6 +303,22 @@ class NitroScreenRecorder: HybridNitroScreenRecorderSpec {
         return
       }
       print("✅ In-app recording started (mic:\(enableMic) camera:\(enableCamera))")
+
+      if enableMic && !self.recorder.isMicrophoneEnabled {
+        // User chose "Allow without Microphone" — stop and reject
+        self.inAppRecordingActive = false
+        let tempURL = FileManager.default.temporaryDirectory
+          .appendingPathComponent("rejected_\(UUID().uuidString).mp4")
+        self.recorder.stopRecording(withOutput: tempURL) { _ in
+          try? FileManager.default.removeItem(at: tempURL)
+        }
+        onRecordingError(RecordingError(
+          name: "MIC_REQUIRED",
+          message: "Microphone recording is required. Please select \"Record Screen & Microphone\"."
+        ))
+        return
+      }
+
       onRecordingStarted()
       if enableCamera {
         DispatchQueue.main.async {
